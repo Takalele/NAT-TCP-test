@@ -16,6 +16,8 @@
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
 
+#define DEFAULT_IP "130.225.254.111"
+
 int do_connect(struct sockaddr_in *dst, int keepalive_time) {
     int s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (s == -1) {
@@ -66,15 +68,26 @@ int do_connect(struct sockaddr_in *dst, int keepalive_time) {
 
 #define NCONNECTIONS 130
 int main(int argc, char *argv[]){
+    const char *ip_address = DEFAULT_IP;
+
+    if (argc >= 2) {
+        ip_address = argv[1];
+    }
+
+    struct sockaddr_in dst_addr = {
+        .sin_family = AF_INET,
+        .sin_port   = htons(31415),
+    };
+
+    // Convert IP string to binary format
+    if (inet_pton(AF_INET, ip_address, &dst_addr.sin_addr) != 1) {
+        fprintf(stderr, "Invalid IP address: %s\n", ip_address);
+        return EXIT_FAILURE;
+    }
     int tcpsessions[NCONNECTIONS] = {0};
     int keepalivetime[NCONNECTIONS] = {0};
     char buf;
     int ret;
-    struct sockaddr_in dst_addr = {
-        .sin_family = AF_INET,
-        .sin_port   = htons(31415),
-        .sin_addr   = inet_addr("130.225.254.111"),
-    };
 
     printf("[+] Trying to establish connections: ");
     for (int i = 0; i < NCONNECTIONS; i++) {
